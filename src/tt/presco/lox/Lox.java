@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 
 public class Lox {
     static boolean hadError = false;
@@ -44,7 +45,7 @@ public class Lox {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
 
-        tokens.stream().forEach(System.out::println);
+        tokens.forEach(System.out::println);
     }
 
     static void error(int line, String message) {
