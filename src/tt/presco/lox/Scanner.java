@@ -1,15 +1,24 @@
 package tt.presco.lox;
 
+import static tt.presco.lox.TokenType.BANG;
+import static tt.presco.lox.TokenType.BANG_EQUAL;
 import static tt.presco.lox.TokenType.COMMA;
 import static tt.presco.lox.TokenType.DOT;
 import static tt.presco.lox.TokenType.EOF;
+import static tt.presco.lox.TokenType.EQUAL;
+import static tt.presco.lox.TokenType.EQUAL_EQUAL;
+import static tt.presco.lox.TokenType.GREATER;
+import static tt.presco.lox.TokenType.GREATER_EQUAL;
 import static tt.presco.lox.TokenType.LEFT_BRACE;
 import static tt.presco.lox.TokenType.LEFT_PAREN;
+import static tt.presco.lox.TokenType.LESS;
+import static tt.presco.lox.TokenType.LESS_EQUAL;
 import static tt.presco.lox.TokenType.MINUS;
 import static tt.presco.lox.TokenType.PLUS;
 import static tt.presco.lox.TokenType.RIGHT_BRACE;
 import static tt.presco.lox.TokenType.RIGHT_PAREN;
 import static tt.presco.lox.TokenType.SEMICOLON;
+import static tt.presco.lox.TokenType.SLASH;
 import static tt.presco.lox.TokenType.STAR;
 
 import java.util.ArrayList;
@@ -49,11 +58,51 @@ public class Scanner {
             case '+': addToken(PLUS); break;
             case ';': addToken(SEMICOLON); break;
             case '*': addToken(STAR); break;
+            case '!': addToken(match('=') ? BANG_EQUAL : BANG); break;
+            case '=': addToken(match('=') ? EQUAL_EQUAL : EQUAL); break;
+            case '<': addToken(match('=') ? LESS_EQUAL : LESS); break;
+            case '>': addToken(match('=') ? GREATER_EQUAL : GREATER); break;
+            case '/':
+                if (match('/')) {
+                    // Comments are meaningless (to the compiler) lexemes, so it adds no token for them
+                    while (peek() != '\n' && !isAtEnd()) advance();
+                } else {
+                    addToken(SLASH);
+                }
+                break;
+            case ' ':
+            case '\t':
+            case '\r':
+                // Ignore whitespace
+                // By restarting the loop we start the next lexeme _after_ the whitespace character
+                break;
+            case '\n':
+                // Used peek to find newline instead of match so that we preserve it, end up here, and increment line
+                line++;
+                break;
+
+            default:
+                Lox.error(line, "Unexpected character.");
+                break;
         }
+    }
+
+    // Effectively a conditional advance: only consumes current character if it's what we're looking for.
+    // Combines the fundamental operators of advance and peek.
+    private boolean match(char expected) {
+        if (isAtEnd()) return false;
+        if (source.charAt(current) != expected) return false;
+
+        current++;
+        return true;
     }
 
     private char advance() {
         return source.charAt(current++);
+    }
+
+    private char peek() {
+        return isAtEnd() ? '\0' : source.charAt(current);
     }
 
     private void addToken(TokenType type) {
