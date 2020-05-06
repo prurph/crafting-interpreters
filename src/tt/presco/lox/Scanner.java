@@ -20,6 +20,7 @@ import static tt.presco.lox.TokenType.RIGHT_PAREN;
 import static tt.presco.lox.TokenType.SEMICOLON;
 import static tt.presco.lox.TokenType.SLASH;
 import static tt.presco.lox.TokenType.STAR;
+import static tt.presco.lox.TokenType.STRING;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,11 +81,32 @@ public class Scanner {
                 // Used peek to find newline instead of match so that we preserve it, end up here, and increment line
                 line++;
                 break;
+            case '"': string(); break;
 
             default:
                 Lox.error(line, "Unexpected character.");
                 break;
         }
+    }
+
+    private void string() {
+        while (peek() != '"' && !isAtEnd()) {
+            if (peek() == '\n') line++;
+            advance();
+        }
+
+        // Unterminated string
+        if (isAtEnd()) {
+            Lox.error(line, "Unterminated string.");
+            return;
+        }
+
+        // Closing " found.
+        advance();
+
+        // Trim surrounding quotes to capture the value of the string.
+        String value = source.substring(start + 1, current - 1);
+        addToken(STRING, value);
     }
 
     // Effectively a conditional advance: only consumes current character if it's what we're looking for.
