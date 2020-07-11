@@ -14,6 +14,7 @@ import static tt.presco.lox.TokenType.LEFT_PAREN;
 import static tt.presco.lox.TokenType.LESS;
 import static tt.presco.lox.TokenType.LESS_EQUAL;
 import static tt.presco.lox.TokenType.MINUS;
+import static tt.presco.lox.TokenType.NUMBER;
 import static tt.presco.lox.TokenType.PLUS;
 import static tt.presco.lox.TokenType.RIGHT_BRACE;
 import static tt.presco.lox.TokenType.RIGHT_PAREN;
@@ -84,9 +85,27 @@ public class Scanner {
             case '"': string(); break;
 
             default:
-                Lox.error(line, "Unexpected character.");
+                if (isDigit(c)) {
+                   number();
+                } else {
+                    Lox.error(line, "Unexpected character.");
+                }
                 break;
         }
+    }
+
+    private void number() {
+        while (isDigit(peek())) advance();
+
+        // Handle fractional part if it exists
+        if (peek() == '.' && isDigit(peekNext())) {
+            // Consume the "."
+            advance();
+
+            while (isDigit(peek())) advance();
+        }
+
+        addToken(NUMBER, Double.parseDouble(source.substring(start, current)));
     }
 
     private void string() {
@@ -125,6 +144,14 @@ public class Scanner {
 
     private char peek() {
         return isAtEnd() ? '\0' : source.charAt(current);
+    }
+
+    private char peekNext() {
+        return current + 1 >= source.length() ? '\0' : source.charAt(current + 1);
+    }
+
+    private boolean isDigit(char c) {
+        return c >= '0' && c <= '9';
     }
 
     private void addToken(TokenType type) {
