@@ -46,229 +46,232 @@ import java.util.List;
 import java.util.Map;
 
 public class Scanner {
-    private static final Map<String, TokenType> keywords;
+  private static final Map<String, TokenType> keywords;
 
-    static {
-        keywords = new HashMap<>() {{
-            put("and", AND);
-            put("class", CLASS);
-            put("else", ELSE);
-            put("false", FALSE);
-            put("for", FOR);
-            put("fun", FUN);
-            put("if", IF);
-            put("nil", NIL);
-            put("or", OR);
-            put("print", PRINT);
-            put("return", RETURN);
-            put("super", SUPER);
-            put("this", THIS);
-            put("true", TRUE);
-            put("var", VAR);
-            put("while", WHILE);
-        }};
-    }
+  static {
+    keywords =
+      new HashMap<>() {
 
-    private final String source;
-    private final List<Token> tokens = new ArrayList<>();
-    private int start = 0;
-    private int current = 0;
-    private int line = 1;
-
-    Scanner(String source) {
-        this.source = source;
-    }
-
-    List<Token> scanTokens() {
-        while (!isAtEnd()) {
-            // At the beginning of the next lexeme.
-            start = current;
-            scanToken();
+        {
+          put("and", AND);
+          put("class", CLASS);
+          put("else", ELSE);
+          put("false", FALSE);
+          put("for", FOR);
+          put("fun", FUN);
+          put("if", IF);
+          put("nil", NIL);
+          put("or", OR);
+          put("print", PRINT);
+          put("return", RETURN);
+          put("super", SUPER);
+          put("this", THIS);
+          put("true", TRUE);
+          put("var", VAR);
+          put("while", WHILE);
         }
-        tokens.add(new Token(EOF, "", null, line));
-        return tokens;
+      };
+  }
+
+  private final String source;
+  private final List<Token> tokens = new ArrayList<>();
+  private int start = 0;
+  private int current = 0;
+  private int line = 1;
+
+  Scanner(String source) {
+    this.source = source;
+  }
+
+  List<Token> scanTokens() {
+    while (!isAtEnd()) {
+      // At the beginning of the next lexeme.
+      start = current;
+      scanToken();
     }
+    tokens.add(new Token(EOF, "", null, line));
+    return tokens;
+  }
 
-    private void scanToken() {
-        char c = advance();
-        switch (c) {
-            case '(':
-                addToken(LEFT_PAREN);
-                break;
-            case ')':
-                addToken(RIGHT_PAREN);
-                break;
-            case '{':
-                addToken(LEFT_BRACE);
-                break;
-            case '}':
-                addToken(RIGHT_BRACE);
-                break;
-            case ',':
-                addToken(COMMA);
-                break;
-            case '.':
-                addToken(DOT);
-                break;
-            case '-':
-                addToken(MINUS);
-                break;
-            case '+':
-                addToken(PLUS);
-                break;
-            case ';':
-                addToken(SEMICOLON);
-                break;
-            case '*':
-                addToken(STAR);
-                break;
-            case '!':
-                addToken(match('=') ? BANG_EQUAL : BANG);
-                break;
-            case '=':
-                addToken(match('=') ? EQUAL_EQUAL : EQUAL);
-                break;
-            case '<':
-                addToken(match('=') ? LESS_EQUAL : LESS);
-                break;
-            case '>':
-                addToken(match('=') ? GREATER_EQUAL : GREATER);
-                break;
-            case '/':
-                if (match('/')) {
-                    // Comments are meaningless (to the compiler) lexemes, so it adds no token for them
-                    while (peek() != '\n' && !isAtEnd()) {
-                        advance();
-                    }
-                } else {
-                    addToken(SLASH);
-                }
-                break;
-            case ' ':
-            case '\t':
-            case '\r':
-                // Ignore whitespace
-                // By restarting the loop we start the next lexeme _after_ the whitespace character
-                break;
-            case '\n':
-                // Used peek to find newline instead of match so that we preserve it, end up here, and increment line
-                line++;
-                break;
-            case '"':
-                string();
-                break;
-
-            default:
-                if (isDigit(c)) {
-                    number();
-                } else if (isAlpha(c)) {
-                    // Assume any lexeme starting with a letter or underscore is an identifier
-                    identifier();
-                } else {
-                    Lox.error(line, "Unexpected character.");
-                }
-                break;
-        }
-    }
-
-    private void identifier() {
-        while (isAlphaNumeric(peek())) {
+  private void scanToken() {
+    char c = advance();
+    switch (c) {
+      case '(':
+        addToken(LEFT_PAREN);
+        break;
+      case ')':
+        addToken(RIGHT_PAREN);
+        break;
+      case '{':
+        addToken(LEFT_BRACE);
+        break;
+      case '}':
+        addToken(RIGHT_BRACE);
+        break;
+      case ',':
+        addToken(COMMA);
+        break;
+      case '.':
+        addToken(DOT);
+        break;
+      case '-':
+        addToken(MINUS);
+        break;
+      case '+':
+        addToken(PLUS);
+        break;
+      case ';':
+        addToken(SEMICOLON);
+        break;
+      case '*':
+        addToken(STAR);
+        break;
+      case '!':
+        addToken(match('=') ? BANG_EQUAL : BANG);
+        break;
+      case '=':
+        addToken(match('=') ? EQUAL_EQUAL : EQUAL);
+        break;
+      case '<':
+        addToken(match('=') ? LESS_EQUAL : LESS);
+        break;
+      case '>':
+        addToken(match('=') ? GREATER_EQUAL : GREATER);
+        break;
+      case '/':
+        if (match('/')) {
+          // Comments are meaningless (to the compiler) lexemes, so it adds no token for them
+          while (peek() != '\n' && !isAtEnd()) {
             advance();
+          }
+        } else {
+          addToken(SLASH);
         }
+        break;
+      case ' ':
+      case '\t':
+      case '\r':
+        // Ignore whitespace
+        // By restarting the loop we start the next lexeme _after_ the whitespace character
+        break;
+      case '\n':
+        // Used peek to find newline instead of match so that we preserve it, end up here, and increment line
+        line++;
+        break;
+      case '"':
+        string();
+        break;
+      default:
+        if (isDigit(c)) {
+          number();
+        } else if (isAlpha(c)) {
+          // Assume any lexeme starting with a letter or underscore is an identifier
+          identifier();
+        } else {
+          Lox.error(line, "Unexpected character.");
+        }
+        break;
+    }
+  }
 
-        // Get identifier; see if it's a reserved word or a regular user-defined identifier
-        TokenType type = keywords.get(source.substring(start, current));
-        addToken(type == null ? IDENTIFIER : type);
+  private void identifier() {
+    while (isAlphaNumeric(peek())) {
+      advance();
     }
 
-    private void number() {
-        while (isDigit(peek())) {
-            advance();
-        }
+    // Get identifier; see if it's a reserved word or a regular user-defined identifier
+    TokenType type = keywords.get(source.substring(start, current));
+    addToken(type == null ? IDENTIFIER : type);
+  }
 
-        // Handle fractional part if it exists
-        if (peek() == '.' && isDigit(peekNext())) {
-            // Consume the "."
-            advance();
-
-            while (isDigit(peek())) {
-                advance();
-            }
-        }
-
-        addToken(NUMBER, Double.parseDouble(source.substring(start, current)));
+  private void number() {
+    while (isDigit(peek())) {
+      advance();
     }
 
-    private void string() {
-        while (peek() != '"' && !isAtEnd()) {
-            if (peek() == '\n') {
-                line++;
-            }
-            advance();
-        }
+    // Handle fractional part if it exists
+    if (peek() == '.' && isDigit(peekNext())) {
+      // Consume the "."
+      advance();
 
-        // Unterminated string
-        if (isAtEnd()) {
-            Lox.error(line, "Unterminated string.");
-            return;
-        }
-
-        // Closing " found.
+      while (isDigit(peek())) {
         advance();
-
-        // Trim surrounding quotes to capture the value of the string.
-        String value = source.substring(start + 1, current - 1);
-        addToken(STRING, value);
+      }
     }
 
-    // Effectively a conditional advance: only consumes current character if it's what we're looking for.
-    // Combines the fundamental operators of advance and peek.
-    private boolean match(char expected) {
-        if (isAtEnd()) {
-            return false;
-        }
-        if (source.charAt(current) != expected) {
-            return false;
-        }
+    addToken(NUMBER, Double.parseDouble(source.substring(start, current)));
+  }
 
-        current++;
-        return true;
+  private void string() {
+    while (peek() != '"' && !isAtEnd()) {
+      if (peek() == '\n') {
+        line++;
+      }
+      advance();
     }
 
-    private char advance() {
-        return source.charAt(current++);
+    // Unterminated string
+    if (isAtEnd()) {
+      Lox.error(line, "Unterminated string.");
+      return;
     }
 
-    private char peek() {
-        return isAtEnd() ? '\0' : source.charAt(current);
+    // Closing " found.
+    advance();
+
+    // Trim surrounding quotes to capture the value of the string.
+    String value = source.substring(start + 1, current - 1);
+    addToken(STRING, value);
+  }
+
+  // Effectively a conditional advance: only consumes current character if it's what we're looking for.
+  // Combines the fundamental operators of advance and peek.
+  private boolean match(char expected) {
+    if (isAtEnd()) {
+      return false;
+    }
+    if (source.charAt(current) != expected) {
+      return false;
     }
 
-    private char peekNext() {
-        return current + 1 >= source.length() ? '\0' : source.charAt(current + 1);
-    }
+    current++;
+    return true;
+  }
 
-    private boolean isAlpha(char c) {
-        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
-    }
+  private char advance() {
+    return source.charAt(current++);
+  }
 
-    private boolean isDigit(char c) {
-        return c >= '0' && c <= '9';
-    }
+  private char peek() {
+    return isAtEnd() ? '\0' : source.charAt(current);
+  }
 
-    private boolean isAlphaNumeric(char c) {
-        return isAlpha(c) || isDigit(c);
-    }
+  private char peekNext() {
+    return current + 1 >= source.length() ? '\0' : source.charAt(current + 1);
+  }
 
-    private void addToken(TokenType type) {
-        addToken(type, null);
-    }
+  private boolean isAlpha(char c) {
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+  }
 
-    private void addToken(TokenType type, Object literal) {
-        String text = source.substring(start, current);
-        tokens.add(new Token(type, text, literal, line));
-    }
+  private boolean isDigit(char c) {
+    return c >= '0' && c <= '9';
+  }
 
-    private boolean isAtEnd() {
-        return current >= source.length();
-    }
+  private boolean isAlphaNumeric(char c) {
+    return isAlpha(c) || isDigit(c);
+  }
+
+  private void addToken(TokenType type) {
+    addToken(type, null);
+  }
+
+  private void addToken(TokenType type, Object literal) {
+    String text = source.substring(start, current);
+    tokens.add(new Token(type, text, literal, line));
+  }
+
+  private boolean isAtEnd() {
+    return current >= source.length();
+  }
 }
